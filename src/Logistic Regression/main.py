@@ -28,8 +28,18 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 print("1. Loading datasets from local csv...")
-train_df = pd.read_csv(r"../../dataset\vietnamese_sms_dataset\train.csv")
-test_df = pd.read_csv(r"../../dataset\vietnamese_sms_dataset\test.csv")
+train_path = (
+    r"../../dataset\vietnamese_sms_dataset\train.csv"
+    if os.path.exists(r"../../dataset\vietnamese_sms_dataset\train.csv")
+    else r"./dataset\vietnamese_sms_dataset\train.csv"
+)
+test_path = (
+    r"../../dataset\vietnamese_sms_dataset\test.csv"
+    if os.path.exists(r"../../dataset\vietnamese_sms_dataset\test.csv")
+    else r"./dataset\vietnamese_sms_dataset\test.csv"
+)
+train_df = pd.read_csv(train_path)
+test_df = pd.read_csv(test_path)
 
 X_train = train_df["message"].values
 y_train = train_df["label"].values
@@ -65,25 +75,26 @@ f1 = f1_score(y_test, y_pred)
 spec = tn / (tn + fp)
 roc_auc = roc_auc_score(y_test, y_scores)
 
-print("\n" + "=" * 55)
-print("              5 EVALUATION MEASUREMENTS                ")
-print("=" * 55)
-print(f" 1. Accuracy            : {acc:.4f} ({acc * 100:.2f}%)")
-print(f" 2. Precision           : {prec:.4f} ({prec * 100:.2f}%)")
-print(f" 3. Recall (Sensitivity): {rec:.4f} ({rec * 100:.2f}%)")
-print(f" 4. F1-Score            : {f1:.4f} ({f1 * 100:.2f}%)")
-print(f" 5. Specificity         : {spec:.4f} ({spec * 100:.2f}%)")
-print("=" * 55)
-print("\nConfusion Matrix Breakdown:")
-print(f"  True Negatives (TN) : {tn}")
-print(f"  False Positives (FP): {fp}")
-print(f"  False Negatives (FN): {fn}")
-print(f"  True Positives (TP) : {tp}")
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred, target_names=["Ham", "Spam"]))
+# print("\n" + "=" * 55)
+# print("              5 EVALUATION MEASUREMENTS                ")
+# print("=" * 55)
+# print(f" 1. Accuracy            : {acc:.4f} ({acc * 100:.2f}%)")
+# print(f" 2. Precision           : {prec:.4f} ({prec * 100:.2f}%)")
+# print(f" 3. Recall (Sensitivity): {rec:.4f} ({rec * 100:.2f}%)")
+# print(f" 4. F1-Score            : {f1:.4f} ({f1 * 100:.2f}%)")
+# print(f" 5. Specificity         : {spec:.4f} ({spec * 100:.2f}%)")
+# print("=" * 55)
+# print("\nConfusion Matrix Breakdown:")
+# print(f"  True Negatives (TN) : {tn}")
+# print(f"  False Positives (FP): {fp}")
+# print(f"  False Negatives (FN): {fn}")
+# print(f"  True Positives (TP) : {tp}")
+# print("\nClassification Report:")
+# print(classification_report(y_test, y_pred, target_names=["Ham", "Spam"]))
 
-print("5. Exporting model to 'model...")
-export_dir = os.path.join("model")
+print("5. Exporting model to 'model' directory...")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+export_dir = os.path.join(script_dir, "model")
 os.makedirs(export_dir, exist_ok=True)
 
 # Export standalone model and vectorizer
@@ -111,44 +122,14 @@ print(f" - {model_path}")
 print(f" - {vectorizer_path}")
 print(f" - {pipeline_path}")
 
-print("\n6. Generating Matplotlib Report Dashboard...")
+print("\n6. Generating and saving 4 individual plot images...")
 plt.style.use(
     "seaborn-v0_8-whitegrid"
     if "seaborn-v0_8-whitegrid" in plt.style.available
     else "default"
 )
 
-fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-
-# --- Plot 1: Confusion Matrix ---
-disp = ConfusionMatrixDisplay(
-    confusion_matrix=cm, display_labels=["Ham (Legitimate)", "Spam / Phishing"]
-)
-disp.plot(ax=axes[0, 0], cmap=plt.cm.Blues, colorbar=False, values_format="d")
-axes[0, 0].set_title(
-    f"Confusion Matrix (Total Test Samples: {len(y_test)})",
-    fontsize=13,
-    fontweight="bold",
-    pad=12,
-)
-axes[0, 0].set_xlabel("Predicted Label", fontsize=11, fontweight="bold")
-axes[0, 0].set_ylabel("True Label", fontsize=11, fontweight="bold")
-axes[0, 0].grid(False)
-
-# Annotation box for Confusion Matrix details
-axes[0, 0].text(
-    0.5,
-    -0.20,
-    f"TN: {tn} | FP: {fp} | FN: {fn} | TP: {tp}",
-    ha="center",
-    va="center",
-    transform=axes[0, 0].transAxes,
-    fontsize=11,
-    fontweight="bold",
-    bbox=dict(boxstyle="round,pad=0.4", facecolor="#f0f4f8", edgecolor="#b0c4de"),
-)
-
-# --- Plot 2: 5 Performance Measurements ---
+# Common variables for plots
 metrics_dict = {
     "Accuracy": acc,
     "Precision": prec,
@@ -160,7 +141,41 @@ names = list(metrics_dict.keys())
 values = list(metrics_dict.values())
 colors = ["#1f77b4", "#2ca02c", "#ff7f0e", "#d62728", "#9467bd"]
 
-bars = axes[0, 1].barh(
+# --- Individual Plot 1: Confusion Matrix ---
+fig_cm, ax_cm = plt.subplots(figsize=(7, 6))
+disp_single = ConfusionMatrixDisplay(
+    confusion_matrix=cm, display_labels=["Ham (Legitimate)", "Spam / Phishing"]
+)
+disp_single.plot(ax=ax_cm, cmap=plt.cm.Blues, colorbar=False, values_format="d")
+ax_cm.set_title(
+    f"Confusion Matrix (Total Test Samples: {len(y_test)})",
+    fontsize=13,
+    fontweight="bold",
+    pad=12,
+)
+ax_cm.set_xlabel("Predicted Label", fontsize=11, fontweight="bold")
+ax_cm.set_ylabel("True Label", fontsize=11, fontweight="bold")
+ax_cm.grid(False)
+ax_cm.text(
+    0.5,
+    -0.18,
+    f"TN: {tn} | FP: {fp} | FN: {fn} | TP: {tp}",
+    ha="center",
+    va="center",
+    transform=ax_cm.transAxes,
+    fontsize=11,
+    fontweight="bold",
+    bbox=dict(boxstyle="round,pad=0.4", facecolor="#f0f4f8", edgecolor="#b0c4de"),
+)
+fig_cm.tight_layout()
+cm_path = os.path.join(export_dir, "confusion_matrix.png")
+fig_cm.savefig(cm_path, dpi=300, bbox_inches="tight")
+plt.close(fig_cm)
+# print(f" - Saved Confusion Matrix to '{cm_path}'")
+
+# --- Individual Plot 2: 5 Performance Measurements ---
+fig_m, ax_m = plt.subplots(figsize=(8, 5.5))
+bars_single = ax_m.barh(
     names[::-1],
     values[::-1],
     color=colors[::-1],
@@ -168,16 +183,16 @@ bars = axes[0, 1].barh(
     edgecolor="#333333",
     linewidth=0.8,
 )
-axes[0, 1].set_xlim(0, 1.18)
-axes[0, 1].set_xlabel("Score (0.0 - 1.0)", fontsize=11, fontweight="bold")
-axes[0, 1].set_title(
+ax_m.set_xlim(0, 1.18)
+ax_m.set_xlabel("Score (0.0 - 1.0)", fontsize=11, fontweight="bold")
+ax_m.set_title(
     "5 Key Performance Measurements", fontsize=13, fontweight="bold", pad=12
 )
-axes[0, 1].grid(axis="x", linestyle="--", alpha=0.6)
+ax_m.grid(axis="x", linestyle="--", alpha=0.6)
 
-for bar in bars:
+for bar in bars_single:
     w = bar.get_width()
-    axes[0, 1].text(
+    ax_m.text(
         w + 0.02,
         bar.get_y() + bar.get_height() / 2,
         f"{w:.4f} ({w * 100:.2f}%)",
@@ -187,13 +202,18 @@ for bar in bars:
         fontweight="bold",
         color="#222222",
     )
+fig_m.tight_layout()
+fig_m.savefig(os.path.join(export_dir, "performance_measurements.png"), dpi=300, bbox_inches="tight")
+plt.close(fig_m)
+# print(f" - Saved Measurements Chart to '{m_path}'")
 
-# --- Plot 3: ROC Curve ---
+# --- Individual Plot 3: ROC Curve ---
+fig_roc, ax_roc = plt.subplots(figsize=(7.5, 6))
 fpr, tpr, _ = roc_curve(y_test, y_scores)
-axes[1, 0].plot(
+ax_roc.plot(
     fpr, tpr, color="#d95f02", lw=2.5, label=f"ROC Curve (AUC = {roc_auc:.4f})"
 )
-axes[1, 0].plot(
+ax_roc.plot(
     [0, 1],
     [0, 1],
     color="#1f4e79",
@@ -201,30 +221,36 @@ axes[1, 0].plot(
     linestyle="--",
     label="Random Chance (AUC = 0.50)",
 )
-axes[1, 0].set_xlim([0.0, 1.0])
-axes[1, 0].set_ylim([0.0, 1.05])
-axes[1, 0].set_xlabel(
+ax_roc.set_xlim([0.0, 1.0])
+ax_roc.set_ylim([0.0, 1.05])
+ax_roc.set_xlabel(
     "False Positive Rate (1 - Specificity)", fontsize=11, fontweight="bold"
 )
-axes[1, 0].set_ylabel("True Positive Rate (Recall)", fontsize=11, fontweight="bold")
-axes[1, 0].set_title(
+ax_roc.set_ylabel("True Positive Rate (Recall)", fontsize=11, fontweight="bold")
+ax_roc.set_title(
     "Receiver Operating Characteristic (ROC)", fontsize=13, fontweight="bold", pad=12
 )
-axes[1, 0].legend(loc="lower right", fontsize=11)
-axes[1, 0].grid(True, linestyle="--", alpha=0.6)
+ax_roc.legend(loc="lower right", fontsize=11)
+ax_roc.grid(True, linestyle="--", alpha=0.6)
+fig_roc.tight_layout()
+roc_path = os.path.join(export_dir, "roc_curve.png")
+fig_roc.savefig(roc_path, dpi=300, bbox_inches="tight")
+plt.close(fig_roc)
+# print(f" - Saved ROC Curve to '{roc_path}'")
 
-# --- Plot 4: Precision-Recall Curve ---
+# --- Individual Plot 4: Precision-Recall Curve ---
+fig_pr, ax_pr = plt.subplots(figsize=(7.5, 6))
 precision_vals, recall_vals, _ = precision_recall_curve(y_test, y_scores)
 ap_score = average_precision_score(y_test, y_scores)
 spam_prevalence = np.mean(y_test)
-axes[1, 1].plot(
+ax_pr.plot(
     recall_vals,
     precision_vals,
     color="#2ca02c",
     lw=2.5,
     label=f"PR Curve (AP = {ap_score:.4f})",
 )
-axes[1, 1].plot(
+ax_pr.plot(
     [0, 1],
     [spam_prevalence, spam_prevalence],
     color="#7f7f7f",
@@ -232,24 +258,14 @@ axes[1, 1].plot(
     linestyle="--",
     label=f"Baseline (Spam Ratio = {spam_prevalence:.2f})",
 )
-axes[1, 1].set_xlim([0.0, 1.0])
-axes[1, 1].set_ylim([0.0, 1.05])
-axes[1, 1].set_xlabel("Recall", fontsize=11, fontweight="bold")
-axes[1, 1].set_ylabel("Precision", fontsize=11, fontweight="bold")
-axes[1, 1].set_title("Precision-Recall Curve", fontsize=13, fontweight="bold", pad=12)
-axes[1, 1].legend(loc="lower left", fontsize=11)
-axes[1, 1].grid(True, linestyle="--", alpha=0.6)
-
-# Layout adjustments
-plt.suptitle(
-    "Spam Detection Model Performance Report - Logistic Regression",
-    fontsize=16,
-    fontweight="bold",
-    y=0.99,
-)
-plt.tight_layout()
-
-# Save the report png to local
-report_filename = "model_performance_report.png"
-plt.savefig(os.path.join(export_dir, report_filename), dpi=300, bbox_inches="tight")
-print(f"Report saved successfully as '{report_filename}' and in '{export_dir}'!")
+ax_pr.set_xlim([0.0, 1.0])
+ax_pr.set_ylim([0.0, 1.05])
+ax_pr.set_xlabel("Recall", fontsize=11, fontweight="bold")
+ax_pr.set_ylabel("Precision", fontsize=11, fontweight="bold")
+ax_pr.set_title("Precision-Recall Curve", fontsize=13, fontweight="bold", pad=12)
+ax_pr.legend(loc="lower left", fontsize=11)
+ax_pr.grid(True, linestyle="--", alpha=0.6)
+fig_pr.tight_layout()
+fig_pr.savefig(os.path.join(export_dir, "pr_curve.png"), dpi=300, bbox_inches="tight")
+plt.close(fig_pr)
+# print(f" - Saved Precision-Recall Curve to '{pr_path}'")
