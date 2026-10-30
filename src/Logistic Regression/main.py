@@ -1,5 +1,4 @@
 import os
-import sys
 
 import joblib
 import matplotlib.pyplot as plt
@@ -22,10 +21,6 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.pipeline import Pipeline
-
-# Ensure UTF-8 output encoding for Vietnamese characters on Windows
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
 
 print("1. Loading datasets from local csv...")
 train_path = (
@@ -185,9 +180,7 @@ bars_single = ax_m.barh(
 )
 ax_m.set_xlim(0, 1.18)
 ax_m.set_xlabel("Score (0.0 - 1.0)", fontsize=11, fontweight="bold")
-ax_m.set_title(
-    "5 Key Performance Measurements", fontsize=13, fontweight="bold", pad=12
-)
+ax_m.set_title("Performance Measurements", fontsize=13, fontweight="bold", pad=12)
 ax_m.grid(axis="x", linestyle="--", alpha=0.6)
 
 for bar in bars_single:
@@ -203,16 +196,18 @@ for bar in bars_single:
         color="#222222",
     )
 fig_m.tight_layout()
-fig_m.savefig(os.path.join(export_dir, "performance_measurements.png"), dpi=300, bbox_inches="tight")
+fig_m.savefig(
+    os.path.join(export_dir, "performance_measurements.png"),
+    dpi=300,
+    bbox_inches="tight",
+)
 plt.close(fig_m)
 # print(f" - Saved Measurements Chart to '{m_path}'")
 
 # --- Individual Plot 3: ROC Curve ---
 fig_roc, ax_roc = plt.subplots(figsize=(7.5, 6))
 fpr, tpr, _ = roc_curve(y_test, y_scores)
-ax_roc.plot(
-    fpr, tpr, color="#d95f02", lw=2.5, label=f"ROC Curve (AUC = {roc_auc:.4f})"
-)
+ax_roc.plot(fpr, tpr, color="#d95f02", lw=2.5, label=f"ROC Curve (AUC = {roc_auc:.4f})")
 ax_roc.plot(
     [0, 1],
     [0, 1],

@@ -3,21 +3,16 @@ import sys
 
 import joblib
 
-# Ensure UTF-8 output encoding for Vietnamese characters on Windows
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-
 
 def find_model_dir():
     """Find the directory where the Logistic Regression model artifacts are exported."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__), "..", "..", "model"
-            )
-        ),
-        os.path.abspath(os.path.join("model")),
-        os.path.abspath(os.path.join("..", "..", "model")),
+        os.path.join(script_dir, "model"),
+        os.path.join(script_dir, "..", "..", "model", "Logistic Regression"),
+        os.path.join(script_dir, "..", "..", "model"),
+        os.path.abspath(os.path.join("src", "Logistic Regression", "model")),
+        os.path.abspath(os.path.join("model", "Logistic Regression")),
         os.path.abspath("model"),
     ]
     for path in candidates:
@@ -33,8 +28,10 @@ def load_model():
     """Load exported model pipeline or individual model and vectorizer."""
     model_dir = find_model_dir()
     if not model_dir:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        expected_dir = os.path.join(script_dir, "model")
         raise FileNotFoundError(
-            "Could not locate exported model files in 'model/Logistic Regression'. "
+            f"Could not locate exported model files in '{expected_dir}'. "
             "Please run 'src/Logistic Regression/main.py' first to train and export the model."
         )
 
@@ -144,7 +141,7 @@ def run_tests():
         print(f'Message : "{sample["text"]}"')
         print(f"Result  : {status}")
         print(
-            f"Scores  : Ham Probability = {ham_prob:.2f}% | Spam Probability = {spam_prob:.2f}%"
+            f"Results  : Ham Probability = {ham_prob:.2f}% | Spam Probability = {spam_prob:.2f}%"
         )
 
 
