@@ -51,7 +51,7 @@ X_test_vec = vectorizer.transform(X_test)
 print("3. Training Random Forest model...")
 model = RandomForestClassifier(
     n_estimators=100,
-    class_weight="balanced",
+    class_weight=None,
     n_jobs=-1,
 )
 model.fit(X_train_vec, y_train)
